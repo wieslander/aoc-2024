@@ -55,7 +55,7 @@ class Solver:
         return getattr(self._solver_module, part_name, None)
 
     def _get_solver_module(self):
-        module_name = f"days.{self._day:02}"
+        module_name = f"aoc.days.{self._day:02}"
         return importlib.import_module(module_name)
 
 
