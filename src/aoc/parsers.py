@@ -23,9 +23,9 @@ def lines(input: str):
     return input.split("\n")
 
 
-def numbers(input: str):
-    return [int(x) for x in input.split()]
+def numbers(input: str, sep: str | None = None):
+    return [int(x) for x in input.split(sep)]
 
 
-def number_lines(input: str):
-    return [numbers(line) for line in lines(input)]
+def number_lines(input: str, sep: str | None = None):
+    return [numbers(line, sep) for line in lines(input)]
