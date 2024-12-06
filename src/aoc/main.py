@@ -23,11 +23,16 @@ def parse_part(args: list[str]) -> PuzzlePart | None:
         return part
 
 
+def parse_example(args: list[str]):
+    return len(args) > 0 and args[-1] == "--example"
+
+
 def main():
     args = sys.argv[1:]
     day = parse_day(args)
     part = parse_part(args)
-    solve(day, part)
+    example = parse_example(args)
+    solve(day, part, example)
 
 
 if __name__ == "__main__":
