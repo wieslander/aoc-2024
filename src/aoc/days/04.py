@@ -1,15 +1,10 @@
 from typing import Iterable
 
-from aoc.geometry import Grid, Point
-from aoc import parsers
+from aoc.geometry import StringGrid, Point
+from aoc.parsers import transform
 
 
-def parse(input: str) -> Grid[str]:
-    lines = parsers.lines(input)
-    return Grid[str].from_rows(lines)
-
-
-def find_word(grid: Grid[str], points: Iterable[Point], word: str):
+def find_word(grid: StringGrid, points: Iterable[Point], word: str):
     try:
         chars = [grid[p] for p in points]
     except KeyError:
@@ -18,34 +13,35 @@ def find_word(grid: Grid[str], points: Iterable[Point], word: str):
     return found_word in (word, "".join(reversed(word)))
 
 
-def find_horizontal(grid: Grid[str], point: Point, word: str):
+def find_horizontal(grid: StringGrid, point: Point, word: str):
     points = [Point(point.x + offset, point.y) for offset in range(len(word))]
     return find_word(grid, points, word)
 
 
-def find_vertical(grid: Grid[str], point: Point, word: str):
+def find_vertical(grid: StringGrid, point: Point, word: str):
     points = [Point(point.x, point.y + offset) for offset in range(len(word))]
     return find_word(grid, points, word)
 
 
-def find_diagonal_right(grid: Grid[str], point: Point, word: str):
+def find_diagonal_right(grid: StringGrid, point: Point, word: str):
     points = [Point(point.x + offset, point.y + offset) for offset in range(len(word))]
     return find_word(grid, points, word)
 
 
-def find_diagonal_left(grid: Grid[str], point: Point, word: str):
+def find_diagonal_left(grid: StringGrid, point: Point, word: str):
     points = [Point(point.x - offset, point.y + offset) for offset in range(len(word))]
     return find_word(grid, points, word)
 
 
-def is_x_mas(grid: Grid[str], top_left: Point):
+def is_x_mas(grid: StringGrid, top_left: Point):
     top_right = Point(top_left.x + 2, top_left.y)
     return find_diagonal_right(grid, top_left, "MAS") and find_diagonal_left(
         grid, top_right, "MAS"
     )
 
 
-def part_1(grid: Grid[str]):
+@transform(StringGrid)
+def part_1(grid: StringGrid):
     count = 0
     for point in grid.points():
         args = (grid, point, "XMAS")
@@ -60,5 +56,6 @@ def part_1(grid: Grid[str]):
     return count
 
 
-def part_2(grid: Grid[str]):
+@transform(StringGrid)
+def part_2(grid: StringGrid):
     return sum(1 for p in grid.points() if is_x_mas(grid, p))
