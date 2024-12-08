@@ -25,6 +25,11 @@ class Point:
             raise TypeError(f"Cannot add Point and {type(other)}")
         return Point(self.x + other.x, self.y + other.y)
 
+    def __sub__(self, other: Any):
+        if not isinstance(other, Point):
+            raise TypeError(f"Cannot subtract Point and {type(other)}")
+        return Point(self.x - other.x, self.y - other.y)
+
 
 type PointTuple = tuple[int, int]
 
@@ -68,6 +73,9 @@ class Grid[T](ABC):
         if isinstance(point, tuple):
             point = Point(*point)
         return self._grid[point]
+
+    def __contains__(self, item: Any):
+        return item in self._grid
 
 
 class StringGrid(Grid[str]):
