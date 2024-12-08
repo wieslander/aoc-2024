@@ -1,13 +1,13 @@
-import sys
+from argparse import ArgumentParser
 from datetime import datetime
 
 from aoc.solver import solve
 from aoc.types import PuzzlePart
 
 
-def parse_day(args: list[str]):
-    if args:
-        return int(args[0])
+def puzzle_day(value: str):
+    if value:
+        return int(value)
     else:
         today = datetime.now()
         if today.month == 12:
@@ -15,24 +15,22 @@ def parse_day(args: list[str]):
     raise ValueError("Cannot determine puzzle from today's date")
 
 
-def parse_part(args: list[str]) -> PuzzlePart | None:
-    if len(args) >= 2:
-        part = int(args[1])
+def puzzle_part(value: str) -> PuzzlePart | None:
+    if value:
+        part = int(value)
         if part not in (1, 2):
             raise ValueError(f"Invalid puzzle part {part}")
         return part
 
 
-def parse_example(args: list[str]):
-    return len(args) > 0 and args[-1] == "--example"
-
-
 def main():
-    args = sys.argv[1:]
-    day = parse_day(args)
-    part = parse_part(args)
-    example = parse_example(args)
-    solve(day, part, example)
+    parser = ArgumentParser()
+    parser.add_argument("day", nargs="?", default="", type=puzzle_day)
+    parser.add_argument("part", nargs="?", default="", type=puzzle_part)
+    parser.add_argument("--example", action="store_true")
+    args = parser.parse_args()
+
+    solve(args.day, args.part, args.example)
 
 
 if __name__ == "__main__":
