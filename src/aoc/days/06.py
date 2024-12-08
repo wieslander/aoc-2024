@@ -49,22 +49,24 @@ class World(GridMap):
 
     def move_guard(self):
         if not self.guard:
-            return
+            return False
 
         self._history.add(self.guard)
 
         next_pos = self.guard.forward_position()
         if next_pos not in self._grid:
             self.guard = None
-            return
+            return False
 
         match self[next_pos]:
             case MapCell.EMPTY:
                 self.guard = self.guard.move_forward()
+                return False
             case MapCell.OBSTACLE:
                 self.guard = self.guard.rotate_clockwise()
+                return True
 
-    def guard_path(self):
+    def visited_cells(self):
         while self.guard:
             self.move_guard()
         return {entry.position for entry in self._history}
@@ -78,8 +80,8 @@ class World(GridMap):
 
     def has_loop(self):
         while self.guard:
-            self.move_guard()
-            if self.guard in self._history:
+            turned = self.move_guard()
+            if turned and self.guard in self._history:
                 return True
 
         return False
@@ -87,19 +89,22 @@ class World(GridMap):
 
 @transform(World)
 def part_1(world: World):
-    return len(world.guard_path())
+    return len(world.visited_cells())
 
 
 @transform(World)
 def part_2(world: World):
-    loop_count = 0
+    targets = set[Point]()
+    checked_locations = set[Point]()
 
-    for pos in world.clone().guard_path():
-        assert world.guard
-        if pos != world.guard.position:
+    while world.guard:
+        pos = world.guard.forward_position()
+        if pos not in checked_locations and world.get(pos) == MapCell.EMPTY:
             clone = world.clone()
             clone[pos] = MapCell.OBSTACLE
             if clone.has_loop():
-                loop_count += 1
+                targets.add(pos)
+            checked_locations.add(pos)
+        world.move_guard()
 
-    return loop_count
+    return len(targets)
