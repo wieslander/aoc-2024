@@ -29,3 +29,7 @@ def numbers(input: str, sep: str | None = None):
 
 def number_lines(input: str, sep: str | None = None):
     return [numbers(line, sep) for line in lines(input)]
+
+
+def digits(input: str):
+    return [int(x) for x in input]
