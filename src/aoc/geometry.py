@@ -14,6 +14,10 @@ class Point:
     def as_tuple(self):
         return (self.x, self.y)
 
+    def neighbors(self):
+        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        return [self + Point(*d) for d in directions]
+
     def __hash__(self):
         return hash(self.as_tuple())
 
@@ -57,6 +61,12 @@ class Grid[T](ABC):
 
     def points(self) -> Iterable[Point]:
         return self._grid.keys()
+
+    def cells(self) -> Iterable[tuple[Point, T]]:
+        return self._grid.items()
+
+    def neighbors(self, point: Point):
+        return [p for p in point.neighbors() if p in self._grid]
 
     def clone(self):
         clone = type(self)()
@@ -112,3 +122,8 @@ class GridMap(Grid[MapCell]):
             if raw_value == cell.value:
                 return cell
         raise ValueError(f"Unknown cell value {raw_value}")
+
+
+class HeightMap(Grid[int]):
+    def parse_cell(self, pos: Point, raw_value: str):
+        return int(raw_value)
