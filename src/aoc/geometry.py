@@ -1,11 +1,14 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+from fractions import Fraction
+from functools import total_ordering
 from typing import Any, Iterable
 
 from aoc import parsers
 
 
+@total_ordering
 @dataclass
 class Point:
     x: int
@@ -24,6 +27,9 @@ class Point:
     def __eq__(self, other: Any):
         return isinstance(other, Point) and self.as_tuple() == other.as_tuple()
 
+    def __lt__(self, other: Any):
+        return isinstance(other, Point) and self.as_tuple() < other.as_tuple()
+
     def __add__(self, other: Any):
         if not isinstance(other, Point):
             raise TypeError(f"Cannot add Point and {type(other)}")
@@ -36,6 +42,46 @@ class Point:
 
 
 type PointTuple = tuple[int, int]
+
+
+@total_ordering
+@dataclass
+class Line:
+    start: Point
+    end: Point
+
+    def direction(self):
+        raw_direction = self.end - self.start
+        match raw_direction:
+            case Point(0, 0):
+                return raw_direction
+            case Point(0, y) if y > 0:
+                return Point(0, 1)
+            case Point(0, y) if y < 0:
+                return Point(0, -1)
+            case Point(x, 0) if x > 0:
+                return Point(1, 0)
+            case Point(x, 0) if x < 0:
+                return Point(-1, 0)
+            case Point(x, y):
+                fraction = Fraction(x, y)
+                return Point(fraction.numerator, fraction.denominator)
+
+    def __hash__(self):
+        return hash((self.start, self.end))
+
+    def __eq__(self, other: Any):
+        return (
+            isinstance(other, Line)
+            and self.start == other.start
+            and self.end == other.end
+        )
+
+    def __lt__(self, other: Any):
+        return (
+            isinstance(other, Line)
+            and (self.start, self.end) < (other.start, other.end),
+        )
 
 
 class Grid[T](ABC):
