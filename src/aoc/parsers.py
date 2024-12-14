@@ -15,6 +15,17 @@ def transform[T](parser: Callable[[str], T]):
     return make_wrapper
 
 
+def transform_lines[T](parser: Callable[[str], T]):
+    def make_wrapper(f: Callable[[list[T]], Result]):
+        @wraps(f)
+        def wrapper(input: str):
+            return f([parser(line) for line in lines(input)])
+
+        return wrapper
+
+    return make_wrapper
+
+
 def raw(input: str):
     return input
 
