@@ -40,6 +40,11 @@ class Point:
             raise TypeError(f"Cannot subtract Point and {type(other)}")
         return Point(self.x - other.x, self.y - other.y)
 
+    def __mul__(self, factor: Any):
+        if not isinstance(factor, int):
+            raise TypeError(f"Cannot multiply Point and {type(factor)}")
+        return Point(self.x * factor, self.y * factor)
+
 
 type PointTuple = tuple[int, int]
 
@@ -103,7 +108,10 @@ class Grid[T](ABC):
     def get(self, point: Point | PointTuple, default: T | None = None):
         if isinstance(point, tuple):
             point = Point(*point)
-        return self._grid.get(point, default)
+        try:
+            return self[point]
+        except KeyError:
+            return default
 
     def points(self) -> Iterable[Point]:
         return self._grid.keys()
@@ -150,6 +158,13 @@ class MapDirection(Enum):
     LEFT = "<"
     RIGHT = ">"
 
+    @staticmethod
+    def parse(char: str):
+        for direction in MapDirection:
+            if char == direction.value:
+                return direction
+        raise ValueError(f"Unknown direction {char}")
+
     def rotate_clockwise(self):
         match self:
             case MapDirection.UP:
@@ -160,6 +175,17 @@ class MapDirection(Enum):
                 return MapDirection.UP
             case MapDirection.RIGHT:
                 return MapDirection.DOWN
+
+    def point(self):
+        match self:
+            case MapDirection.UP:
+                return Point(0, -1)
+            case MapDirection.DOWN:
+                return Point(0, 1)
+            case MapDirection.LEFT:
+                return Point(-1, 0)
+            case MapDirection.RIGHT:
+                return Point(1, 0)
 
 
 class GridMap(Grid[MapCell]):
