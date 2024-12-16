@@ -21,6 +21,10 @@ class Point:
         directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
         return [self + Point(*d) for d in directions]
 
+    def manhattan_distance(self, other: "Point"):
+        diff = other - self
+        return abs(diff.x) + abs(diff.y)
+
     def __hash__(self):
         return hash(self.as_tuple())
 
@@ -152,6 +156,7 @@ class MapCell(Enum):
     OBSTACLE = "#"
 
 
+@total_ordering
 class MapDirection(Enum):
     UP = "^"
     DOWN = "v"
@@ -176,6 +181,17 @@ class MapDirection(Enum):
             case MapDirection.RIGHT:
                 return MapDirection.DOWN
 
+    def rotate_counterclockwise(self):
+        match self:
+            case MapDirection.UP:
+                return MapDirection.LEFT
+            case MapDirection.DOWN:
+                return MapDirection.RIGHT
+            case MapDirection.LEFT:
+                return MapDirection.DOWN
+            case MapDirection.RIGHT:
+                return MapDirection.UP
+
     def point(self):
         match self:
             case MapDirection.UP:
@@ -186,6 +202,12 @@ class MapDirection(Enum):
                 return Point(-1, 0)
             case MapDirection.RIGHT:
                 return Point(1, 0)
+
+    def __lt__(self, other: Any):
+        if not isinstance(other, MapDirection):
+            return False
+        directions = list(MapDirection)
+        return directions.index(self) < directions.index(other)
 
 
 class GridMap(Grid[MapCell]):
