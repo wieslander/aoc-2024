@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 from aoc.geometry import Grid, MapDirection, Point
 from aoc.parsers import transform
-from aoc.search import a_star
+from aoc.search import a_star, cheapest_paths
 
 
 class Cell(Enum):
@@ -28,11 +28,11 @@ class State(NamedTuple):
     direction: MapDirection
 
     def next_states(self, maze: Maze):
+        yield self.update(direction=self.direction.rotate_clockwise()), 1000
+        yield self.update(direction=self.direction.rotate_counterclockwise()), 1000
         forward_pos = self.position + self.direction.point()
         if maze.get(forward_pos) in (Cell.EMPTY, Cell.END):
             yield self.update(position=forward_pos), 1
-        yield self.update(direction=self.direction.rotate_clockwise()), 1000
-        yield self.update(direction=self.direction.rotate_counterclockwise()), 1000
 
     def update(
         self, position: Point | None = None, direction: MapDirection | None = None
@@ -61,6 +61,24 @@ def print_path(path: list[tuple[State, int]], maze: Maze):
         print("".join(line))
 
 
+def print_paths(path_tiles: set[Point], maze: Maze):
+    width = max(p.x for p in maze.points()) + 1
+    height = max(p.y for p in maze.points()) + 1
+    lines = list[list[str]]()
+
+    for y in range(height):
+        line = list[str]()
+        for x in range(width):
+            line.append(maze[(x, y)].value)
+        lines.append(line)
+
+    for pos in path_tiles:
+        lines[pos.y][pos.x] = "O"
+
+    for line in lines:
+        print("".join(line))
+
+
 @transform(Maze)
 def part_1(maze: Maze):
     start_pos = next(dropwhile(lambda p: maze[p] != Cell.START, maze.points()))
@@ -80,3 +98,22 @@ def part_1(maze: Maze):
     _, cost = path.pop()
 
     return cost
+
+
+@transform(Maze)
+def part_2(maze: Maze):
+    start_pos = next(dropwhile(lambda p: maze[p] != Cell.START, maze.points()))
+    goal = next(dropwhile(lambda p: maze[p] != Cell.END, maze.points()))
+    start_state = State(start_pos, MapDirection.RIGHT)
+
+    paths = cheapest_paths(
+        start_state,
+        partial(State.next_states, maze=maze),
+        lambda state: state.position == goal,
+    )
+    path_tiles = set[Point]()
+    for path in paths:
+        path_tiles.update(state.position for state in path)
+
+    print_paths(path_tiles, maze)
+    return len(path_tiles)
