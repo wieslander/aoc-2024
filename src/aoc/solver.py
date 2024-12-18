@@ -77,6 +77,7 @@ class Solver:
             return self._puzzle.input_data
 
     def _get_example(self, part: PuzzlePart):
+        return self._puzzle.examples[-1]
         required_attribute = f"answer_{aocd_part(part)}"
         for example in self._puzzle.examples:
             if getattr(example, required_attribute) is not None:
