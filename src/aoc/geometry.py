@@ -14,6 +14,10 @@ class Point:
     x: int
     y: int
 
+    @staticmethod
+    def parse(input: str, separator: str = ","):
+        return Point(*(int(n) for n in input.split(separator)))
+
     def as_tuple(self):
         return (self.x, self.y)
 
@@ -211,6 +215,9 @@ class MapDirection(Enum):
 
 
 class GridMap(Grid[MapCell]):
+    def empty_neighbors(self, pos: Point):
+        return (n for n in self.neighbors(pos) if self[n] == MapCell.EMPTY)
+
     def parse_cell(self, pos: Point, raw_value: str):
         for cell in MapCell:
             if raw_value == cell.value:
