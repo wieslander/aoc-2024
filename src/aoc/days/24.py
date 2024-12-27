@@ -73,7 +73,7 @@ def part_1(input: str):
 
 
 def print_circuit(expressions: list[Expression]):
-    # Annotate the adders and print them for manual inspection
+    # Annotate the adders for manual inspection, grouped by bit position
     output_map = dict[str, str]()
 
     def print_expr(expr: Expression):
@@ -130,27 +130,11 @@ def print_circuit(expressions: list[Expression]):
         print()
 
 
-def part_2(input: str):
-    expression_map, _ = parse_expressions(input)
-    expressions = sorted(expression_map.values(), key=lambda e: e.operator)
-    print_circuit(expressions)
-
-    def swap(key_a: str, key_b: str):
-        a = expression_map[key_a]
-        b = expression_map[key_b]
-        a.output = key_b
-        b.output = key_a
-
-    # Determined by manual inspection, won't work on other input
-    swap("z12", "fgc")
-    swap("z29", "mtj")
-    swap("dgr", "vvm")
-    swap("z37", "dtv")
-
-    return "dgr,dtv,fgc,mtj,vvm,z12,z29,z37"
-
-
 def print_bad_outputs(expressions: dict[str, Expression]):
+    # Debug code for manual inspection of the adder.
+    # Try to add values one bit position at a time.  If the actual
+    # result doesn't match the expected result, print the incorrect
+    # bit position along with any non-zero gate outputs.
     all_zeros: dict[str, Bit] = {key: 0 for key in expressions.keys()}
     bad_outputs = set[str]()
 
@@ -180,3 +164,112 @@ def print_bad_outputs(expressions: dict[str, Expression]):
                         print(key)
 
     print(sorted(bad_outputs))
+
+
+def find_bad_outputs(expressions: list[Expression]):
+    # Check the half/full adder for each bit and return any outputs
+    # that doesn't match the expected structure.
+    #
+    # Not entirely bullet-proof, but should cover most cases in practice.
+    expression_map = {(e.left, e.operator, e.right): e for e in expressions}
+
+    bad_outputs = set[str]()
+
+    def get_fuzzy(left: str, operator: str, right: str):
+        left, right = sorted([left, right])
+        expr = expression_map.get((left, operator, right))
+        if expr:
+            return expr
+
+        for e in expressions:
+            if e.operator != operator:
+                continue
+            inputs = (e.left, e.right)
+            if left in inputs or right in inputs:
+                bad_outputs.update(
+                    key for key in (left, right) if key and key not in inputs
+                )
+                return e
+
+        bad_outputs.update(output for output in (left, right) if output)
+
+    def expr(left: str, operator: str, right: str):
+        left, right = sorted([left, right])
+        return expression_map[(left, operator, right)]
+
+    carry_in = ""
+    first_carry = ""
+
+    for bit_index in range(45):
+        x_key = f"x{bit_index:02d}"
+        y_key = f"y{bit_index:02d}"
+        z_key = f"z{bit_index:02d}"
+
+        carry_expr = expr(x_key, "AND", y_key)
+        sum_expr = expr(x_key, "XOR", y_key)
+
+        if bit_index == 0:
+            if not sum_expr.output == z_key:
+                bad_outputs.update([sum_expr.output, z_key])
+            if carry_expr.output.startswith("z"):
+                bad_outputs.add(carry_expr.output)
+            else:
+                first_carry = carry_expr.output
+
+        elif bit_index == 1:
+            if carry_expr.output.startswith("z"):
+                bad_outputs.add(carry_expr.output)
+            if sum_expr.output.startswith("z"):
+                bad_outputs.add(sum_expr.output)
+
+            carry_in_expr = get_fuzzy(first_carry, "AND", sum_expr.output)
+            if carry_in_expr:
+                if carry_in_expr.output.startswith("z"):
+                    bad_outputs.add(carry_in_expr.output)
+                else:
+                    carry_in = carry_in_expr.output
+
+            z_output_expr = get_fuzzy(first_carry, "XOR", sum_expr.output)
+            if z_output_expr and z_output_expr.output != z_key:
+                bad_outputs.update([z_output_expr.output, z_key])
+
+            out_expr = get_fuzzy(carry_expr.output, "OR", carry_in)
+            if out_expr:
+                if out_expr.output.startswith("z"):
+                    bad_outputs.add(out_expr.output)
+                    carry_in = ""
+                else:
+                    carry_in = out_expr.output
+
+        elif bit_index > 1:
+            if carry_expr.output.startswith("z"):
+                bad_outputs.add(carry_expr.output)
+            if sum_expr.output.startswith("z"):
+                bad_outputs.add(sum_expr.output)
+
+            z_output_expr = get_fuzzy(carry_in, "XOR", sum_expr.output)
+            if z_output_expr and z_output_expr.output != z_key:
+                bad_outputs.update([z_output_expr.output, z_key])
+
+            carry_expr_2 = get_fuzzy(carry_in, "AND", sum_expr.output)
+            carry_in = ""
+            if carry_expr_2:
+                if carry_expr_2.output.startswith("z"):
+                    bad_outputs.add(carry_expr_2.output)
+                else:
+                    out_expr = get_fuzzy(carry_expr.output, "OR", carry_expr_2.output)
+                    if out_expr:
+                        if out_expr.output.startswith("z"):
+                            if bit_index < 44:
+                                bad_outputs.add(out_expr.output)
+                        else:
+                            carry_in = out_expr.output
+
+    return bad_outputs
+
+
+def part_2(input: str):
+    expression_map, _ = parse_expressions(input)
+    expressions = sorted(expression_map.values(), key=lambda e: e.operator)
+    bad_outputs = find_bad_outputs(expressions)
+    return ",".join(sorted(bad_outputs))
